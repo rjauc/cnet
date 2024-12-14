@@ -12,14 +12,13 @@ int main(int argc, char** argv) {
     LOG_DECLARE();
 
     ARG::ArgParser args;
-    args.Add("Type",    { .opt="-t", .longOpt="--type", .description="Specify whether to run a Server or a Client.", .mandatory=true });
-    args.Add("Address", { .opt="-a", .longOpt="--address", .value="127.0.0.1", .description="Network address to connect to as a Server." });
-    args.Add("Port",    { .opt="-p", .longOpt="--port", .value="6969", .description="Network port to use." });
-    args.Add("Message", { .longOpt="--message", .description="Custom message for the client to send to the server on startup." });
+    args.Add("Type",       { .opt="-t", .longOpt="--type", .description="Specify whether to run a Server or a Client.", .isMandatory=true });
+    args.Add("Address",    { .opt="-a", .longOpt="--address", .value="127.0.0.1", .description="Network address to connect to as a Server." });
+    args.Add("Port",       { .opt="-p", .longOpt="--port", .value="6969", .description="Network port to use." });
+    args.Add("Message",    { .longOpt="--message", .description="Custom message for the client to send to the server on startup." });
     if (!args.Parse(argc, argv))
         return 0;
 
-    LOG_DEBUG("Program startup with {}", args["Type"]);
     if (args["Type"] == "Client") {
         LOG_SET_FILE_NAME(args["Type"]);
         CNET::Client client;
@@ -28,7 +27,7 @@ int main(int argc, char** argv) {
         }
 
         std::string sendBuffer;
-        if (args["Message"].length() > 0) {
+        if (args.IsSet("Message")) {
             sendBuffer = args["Message"];
         } else {
             sendBuffer = "Hello from the client!"

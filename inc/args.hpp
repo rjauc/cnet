@@ -9,13 +9,15 @@ namespace ARG
         std::string longOpt = "";
         std::string value = "";
         std::string description = "";
-        bool mandatory = false;
+        bool isMandatory = false;
+        bool isBoolean = false;
+        bool isSet = false;
     };
 
     class ArgParser {
         public:
             ArgParser() {
-                Add("Executable", { .description="Specifies the currently running executable.", .mandatory=true });
+                Add("Executable", { .description="Specifies the currently running executable.", .isMandatory=true });
             }
 
             void Add(std::string name, Arg arg) {
@@ -24,12 +26,14 @@ namespace ARG
                     .longOpt = arg.longOpt,
                     .value = arg.value,  // Default value, replaced by actual value if it exists
                     .description = arg.description,
-                    .mandatory = arg.mandatory
+                    .isMandatory = arg.isMandatory,
+                    .isBoolean = arg.isBoolean
                 };
             }
 
             bool Parse(int argc, char** argv) {
                 m_args["Executable"].value = std::string(argv[0]);
+                m_args["Executable"].isSet = true;
                 
                 Arg* arg = nullptr;
                 for (int i = 1; i < argc; i++) {
@@ -42,22 +46,26 @@ namespace ARG
 
                     if (arg) {
                         arg->value = argStr;
-                        arg = nullptr;
+                        arg->isSet = true;
                     } else if (argStr.starts_with("--")) {
                         arg = FindArg(argStr);
-                        continue;
+                        if (arg->isBoolean) {
+                            arg->isSet = true;
+                        } else continue;
                     } else if (argStr[0] == '-') {
                         auto opt = std::string_view(&argStr[0], 2);
-                        // TODO AE: Handle if option not known to parser (let parser decide)
                         arg = FindArg(opt);
-                        if (argStr.length() > 2) {
+                        if (arg->isBoolean) {
+                            arg->isSet = true;
+                        } else if (argStr.length() > 2) {
                             arg->value = std::string_view(&argStr[2], argStr.length() - 2);
-                            arg = nullptr;
+                            arg->isSet = true;
                         } else continue;
                     }
                     arg = nullptr;
                 }
                 
+                // TODO AE: Optionally handle unknown options
                 if (!CheckArgs()) {
                     PrintHelp();
                     return false;
@@ -65,7 +73,15 @@ namespace ARG
                 return true;
             }
 
+            bool IsSet(const std::string& name) { return m_args.contains(name) && m_args[name].isSet; }
+
+            std::string GetStr(const std::string& name) { return m_args[name].value; }
             auto operator[](const std::string& name) { return m_args[name].value; }
+
+            // TODO AE: Handle unset and non-existing args
+            int GetInt(const std::string& name) { return std::atoi(m_args[name].value.c_str()); }
+            double GetDouble(const std::string& name) { return std::stod(m_args[name].value.c_str()); }
+            bool GetBool(const std::string& name) { return m_args[name].isBoolean && m_args[name].isSet; }
 
         private:
             Arg* FindArg(std::string_view opt) {
@@ -94,7 +110,7 @@ namespace ARG
                         else
                             std::cout << "\t";
                         std::cout << arg.longOpt;
-                    if (arg.mandatory)
+                    if (arg.isMandatory)
                         std::cout << "\tMANDATORY";
                     if (arg.value.length() > 0)
                         std::cout << "\tDEFAULT = " << arg.value;
@@ -109,7 +125,7 @@ namespace ARG
 
             bool CheckArgs() {
                 for (const auto& [name, arg]: m_args)
-                    if (arg.mandatory && arg.value.length() == 0)
+                    if (arg.isMandatory && !arg.isSet)
                         return false;
                 return true;
             }
