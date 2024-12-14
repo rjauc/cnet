@@ -3,8 +3,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 
-#include "logging.hpp"
-
 namespace CNET
 {
     static inline intptr_t id = 0;
@@ -12,17 +10,9 @@ namespace CNET
     Client::Client(internal::SocketHandle socket) {
         internal::GlobalState::Initialize();
         m_socket = socket;
-
-        if (socket == INVALID_SOCKET)
-            LOG_SET_NAME("Client({})", id++);
-        else 
-            LOG_SET_NAME("(Server)Client({})", id++);
-        // LOG_SET_FILE_NAME("Client");
-        LOG_INFO("Initialized.");
     }
 
     Client::Client(Client&& other) noexcept {
-        LOG_MOVE(this, other);
         this->m_socket = other.m_socket;
         other.Invalidate();
     }
@@ -32,11 +22,9 @@ namespace CNET
             Disconnect();
         if (!m_isInvalid)
             internal::GlobalState::Terminate();
-        LOG_INFO("Terminated.");
     }
 
     Client& Client::operator=(Client&& other) noexcept {
-        LOG_MOVE(this, other);
         this->m_socket = other.m_socket;
         other.Invalidate();
         return *this;
@@ -79,7 +67,6 @@ namespace CNET
             m_socket = INVALID_SOCKET;
             return false;
         }
-        LOG_INFO("Connnected to {}::{}", address, port);
         return true;
     }
 
@@ -89,19 +76,12 @@ namespace CNET
         shutdown(m_socket, SD_BOTH);
         closesocket(m_socket);
         m_socket = INVALID_SOCKET;
-        LOG_INFO("Disconnected.");
     }
 
     bool Client::IsConnected() {
         if (m_socket == INVALID_SOCKET) {
-            LOG_INFO("Is not connected (IVS)");
             return false;
         }
-
-        // if (GetReceivePendingSize() >= 0) {
-        //     LOG_INFO("Is connected (GRPS)");
-        //     return true;
-        // }
 
         char data;
         int result = recv(m_socket, &data, sizeof(data), MSG_PEEK);
@@ -109,27 +89,20 @@ namespace CNET
         if (result > 0) {
             // There is still data to be read
             isConnected = true;
-            LOG_INFO("Data still not read.");
         } else if (result == 0) {
             // Proper shutdown
             isConnected = false;
-            LOG_INFO("Proper shutdown.");
         } else if (result < 0) {
             // Error
             auto lastError = WSAGetLastError();
-            LOG_DEBUG("Error {} occured.", lastError);
             if (lastError == WSAENOTCONN || lastError == WSAENOTSOCK) {
                 isConnected = false;
-                LOG_DEBUG("Erroneous shutdown(?) ASSUME DISCONNECTED");
             } else if (lastError == WSAEWOULDBLOCK) {
                 isConnected = true;
-                LOG_DEBUG("Still connected maybe(?) ASSUME CONNECTED");
             } else {
-                LOG_ERROR("Error {} not handled.", lastError);
+                // Error not handled
             }
         }
-
-        LOG_INFO("Is {}connected", isConnected ? "" : "not ");
         return isConnected;
     }
 
@@ -147,7 +120,6 @@ namespace CNET
             return ip;
         } else {
             auto lastError = WSAGetLastError();
-            LOG_ERROR("Error {} occured.", lastError);
         }
         return "Unknown";
     }
@@ -161,12 +133,9 @@ namespace CNET
 
         if (result != 0) {
             auto lastError = WSAGetLastError();
-            LOG_ERROR("Error {} occured.", lastError);
             return -1;
         }
         
-        if (bytesPending)
-            LOG_INFO("There are {} bytes pending read.", bytesPending);
         return bytesPending;
     }
 
@@ -182,7 +151,6 @@ namespace CNET
         int result = send(m_socket, reinterpret_cast<const char*>(data), size, 0);
         if (result == SOCKET_ERROR) 
             return false;
-        LOG_INFO("Sent {} bytes.", result);
         return true;
     }
 
@@ -193,7 +161,6 @@ namespace CNET
         int result = recv(m_socket, reinterpret_cast<char*>(data), maxSize, 0);
         if (result == SOCKET_ERROR)
             return false;
-        LOG_INFO("Received {} bytes.", result);
         return true;
     }
 

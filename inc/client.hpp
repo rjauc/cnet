@@ -3,8 +3,6 @@
 
 #include <string>
 
-#include "logging.hpp"
-
 namespace CNET
 {
     class Client {
@@ -35,6 +33,5 @@ namespace CNET
         private:
             internal::SocketHandle m_socket;
             bool m_isInvalid = false;
-            LOG_DECLARE();
     };
 }

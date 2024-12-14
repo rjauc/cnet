@@ -1,11 +1,8 @@
 #include "cnet.hpp"
 
 #include <stdexcept>
-
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-#include "logging.hpp"
 
 namespace CNET
 {
@@ -24,10 +21,6 @@ namespace CNET
         }
 
         void GlobalState::Terminate() {
-            LOG_DECLARE();
-            LOG_SET_NAME("GlobalState");
-            LOG_DEBUG("Usage counter: {}", GlobalState::m_usageCounter-1);
-
             if (GlobalState::m_usageCounter > 0) {
                 GlobalState::m_usageCounter -= 1;
                 return;

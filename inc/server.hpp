@@ -5,8 +5,6 @@
 #include <string>
 #include <vector>
 
-#include "logging.hpp"
-
 namespace CNET
 {
     class Server {
@@ -26,7 +24,6 @@ namespace CNET
         private:
             internal::SocketHandle m_socket;
             std::vector<Client> m_clients;
-            LOG_DECLARE();
     };
 }
 

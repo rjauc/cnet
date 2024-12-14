@@ -1,24 +1,19 @@
 #include "server.hpp"
 
+#include <algorithm>
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-#include "logging.hpp"
 
 namespace CNET
 {
     Server::Server() {
         internal::GlobalState::Initialize();
-        LOG_SET_NAME("Server");
-        // LOG_SET_FILE_NAME("Server");
-        LOG_INFO("Initialized.");
     }
 
     Server::~Server() {
         if (m_socket != INVALID_SOCKET)
             Stop();
         internal::GlobalState::Terminate();
-        LOG_INFO("Terminated.");
     }
 
     bool Server::Start(const std::string& port) {
@@ -63,8 +58,6 @@ namespace CNET
             m_socket = INVALID_SOCKET;
             return false;
         }
-
-        LOG_INFO("Started, listening to port {}.", port);
         return true;
     }
 
@@ -73,13 +66,11 @@ namespace CNET
             return;
         
         // Client destructor takes care to close its socket properly
-        LOG_INFO("Disconnecting {} clients.", m_clients.size());
         m_clients.clear();
 
         shutdown(m_socket, SD_BOTH);
         closesocket(m_socket);
         m_socket = INVALID_SOCKET;
-        LOG_INFO("Stopped.");
     }
 
     bool Server::IsClientWaitingToConnect() {
@@ -99,7 +90,6 @@ namespace CNET
             if (FD_ISSET(m_socket, &readFDSet))
                 isClientWaiting = true;
 
-        // LOG_INFO("There {} client waiting to connect.", isClientWaiting ? "is a" : "is no");
         return isClientWaiting;
     }
 
@@ -109,12 +99,10 @@ namespace CNET
 
         SOCKET clientSocket = accept(m_socket, nullptr, nullptr);
         if (clientSocket == INVALID_SOCKET) {
-            LOG_WARNING("Failed to accept a client.");
             return false;
         }
 
         m_clients.emplace_back(clientSocket);
-        LOG_INFO("Accepted a client from {}.", m_clients.back().GetIP());
         return true;
     }
 

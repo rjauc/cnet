@@ -3,13 +3,10 @@
     "configurePresets": [
         {
             "name": "cnet_gcc",
-            "displayName": "GCC 14.2.0 x86_64-w64-mingw32 (ucrt64)",
-            "description": "Using compilers: C = C:\\Tools\\msys64\\ucrt64\\bin\\gcc.exe, CXX = C:\\Tools\\msys64\\ucrt64\\bin\\g++.exe",
+            "displayName": "GCC",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_INSTALL_PREFIX": "${sourceDir}/install/${presetName}",
-                "CMAKE_C_COMPILER": "C:/Tools/msys64/ucrt64/bin/gcc.exe",
-                "CMAKE_CXX_COMPILER": "C:/Tools/msys64/ucrt64/bin/g++.exe",
+                "CMAKE_CXX_COMPILER": "g++.exe",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
         }
