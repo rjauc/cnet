@@ -17,7 +17,7 @@ int main() {
         client.Send(input.data(), input.size());
 
         // Wait for the client to receive echo
-        while (!client.IsReceivePending()) {
+        while (!client.IsReceiveReady()) {
             // Break out if server has disconnected the client
             if (!client.IsConnected()) {
                 break;
@@ -25,7 +25,7 @@ int main() {
         }
 
         // Receive server echo
-        auto recvSize = client.GetReceivePendingSize();
+        auto recvSize = client.GetReceiveSize();
         std::string recvBuffer(recvSize, '\0');
         client.Receive(recvBuffer.data(), recvBuffer.size());
         std::cout << recvBuffer << '\n';

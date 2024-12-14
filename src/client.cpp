@@ -124,7 +124,7 @@ namespace CNET
         return "Unknown";
     }
 
-    int Client::GetReceivePendingSize() {
+    int Client::GetReceiveSize() {
         if (m_socket == INVALID_SOCKET)
             return -1;
 
@@ -139,8 +139,8 @@ namespace CNET
         return bytesPending;
     }
 
-    bool Client::IsReceivePending() {
-        bool isPending = GetReceivePendingSize() > 0;
+    bool Client::IsReceiveReady() {
+        bool isPending = GetReceiveSize() > 0;
         return isPending;
     }
 

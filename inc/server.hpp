@@ -15,10 +15,9 @@ namespace CNET
             bool Start(const std::string& port);
             void Stop();
 
-            bool IsClientWaitingToConnect();
-            bool AcceptNewClient();
+            bool IsClientPending();
+            bool AcceptClient();
             std::vector<Client>& GetClients();
-
             void RemoveDisconnectedClients();
 
         private:

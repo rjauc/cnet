@@ -73,7 +73,7 @@ namespace CNET
         m_socket = INVALID_SOCKET;
     }
 
-    bool Server::IsClientWaitingToConnect() {
+    bool Server::IsClientPending() {
         if (m_socket == INVALID_SOCKET)
             return false;
 
@@ -93,7 +93,7 @@ namespace CNET
         return isClientWaiting;
     }
 
-    bool Server::AcceptNewClient() {
+    bool Server::AcceptClient() {
         if (m_socket == INVALID_SOCKET)
             return false;
 

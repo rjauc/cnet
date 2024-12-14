@@ -12,9 +12,9 @@ int main() {
     bool running = true;
     while (running) {
         // Accept any pending clients
-        while (server.IsClientWaitingToConnect()) {
+        while (server.IsClientPending()) {
             std::cout << "Accepted a new client.\n";
-            server.AcceptNewClient();
+            server.AcceptClient();
         }
         // Remove clients that are no longer connected from internal buffer
         server.RemoveDisconnectedClients();
@@ -23,12 +23,12 @@ int main() {
         auto& clients = server.GetClients();
         for (auto& client: clients) {
             // Skip client if it hasn't sent any data
-            if (!client.IsReceivePending()) {
+            if (!client.IsReceiveReady()) {
                 continue;
             }
 
             // Receive pending client data
-            auto recvSize = client.GetReceivePendingSize();
+            auto recvSize = client.GetReceiveSize();
             std::string recvBuffer(recvSize, '\0');
             client.Receive(recvBuffer.data(), recvBuffer.size());
             std::cout << "Received: " << recvBuffer << '\n';
