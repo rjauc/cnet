@@ -11,7 +11,8 @@ are in their own folder, in order to facilitate future ports.
 
 ## Security
 Currently all of the data is sent INSECURELY. All data sent is in the form of PLAIN
-bytes and NOT ENCRYPTED in any way.
+bytes and NOT ENCRYPTED in any way. Users are encouraged to implement their own
+encryption and decryption if that is required by their usecase.
 
 ## Examples
 A documented example of a server and a client are provided in the source code.
