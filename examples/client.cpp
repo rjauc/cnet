@@ -5,7 +5,7 @@
 int main() {
     // Connect client to a server
     CNET::Client client;
-    std::cout << "Connecting to server ... ";
+    std::cout << "Connecting to server ... " << std::flush;
     while(!client.Connect("127.0.0.1", "27272")) {}
     std::cout << "Connected!\n";
 

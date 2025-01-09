@@ -1,4 +1,5 @@
 #include "server.hpp"
+#include "global_state.hpp"
 
 #include <algorithm>
 #include <winsock2.h>
@@ -97,12 +98,12 @@ namespace CNET
         if (m_socket == INVALID_SOCKET)
             return false;
 
-        SOCKET clientSocket = accept(m_socket, nullptr, nullptr);
+        internal::SocketHandle clientSocket = accept(m_socket, nullptr, nullptr);
         if (clientSocket == INVALID_SOCKET) {
             return false;
         }
 
-        m_clients.emplace_back(clientSocket);
+        m_clients.push_back(Client(clientSocket));
         return true;
     }
 

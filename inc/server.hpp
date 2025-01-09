@@ -7,6 +7,8 @@
 
 namespace CNET
 {
+    class Client;
+
     class Server {
         public:
             Server();

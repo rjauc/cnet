@@ -5,10 +5,6 @@ and for a client to connect and communicate with a server. All of the methods ar
 non-blocking, which allows for a simple interface to communicate with multiple clients 
 at once.
 
-## Implementation
-The current implementation is using Microsoft's WinSock2, however the source files
-are in their own folder, in order to facilitate future ports.
-
 ## Security
 Currently all of the data is sent INSECURELY. All data sent is in the form of PLAIN
 bytes and NOT ENCRYPTED in any way. Users are encouraged to implement their own

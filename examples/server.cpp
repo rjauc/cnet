@@ -4,7 +4,7 @@
 
 int main() {
     // Start a server on port 27272
-    std::cout << "Starting server ... ";
+    std::cout << "Starting server ... " << std::flush;
     CNET::Server server;
     server.Start("27272");
     std::cout << "Started!\n";

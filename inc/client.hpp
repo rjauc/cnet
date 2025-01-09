@@ -7,7 +7,7 @@ namespace CNET
 {
     class Client {
         public:
-            Client(internal::SocketHandle socket = internal::EMPTY_SOCKET_HANDLE);
+            Client();
             Client(const Client&) = delete;
             Client(Client&& other) noexcept;
             ~Client();
@@ -28,10 +28,14 @@ namespace CNET
             bool Receive(void* data, size_t maxSize);
 
         private:
+            Client(internal::SocketHandle socket);
             void Invalidate();
 
         private:
-            internal::SocketHandle m_socket;
-            bool m_isInvalid = false;
+            internal::SocketHandle m_socket { internal::EMPTY_SOCKET_HANDLE };
+            bool m_isInvalid { false };
+
+        private:
+            friend class Server;
     };
 }

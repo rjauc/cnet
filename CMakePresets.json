@@ -2,13 +2,20 @@
     "version": 8,
     "configurePresets": [
         {
-            "name": "cnet_gcc",
+            "name": "Debug",
             "displayName": "GCC",
             "binaryDir": "${sourceDir}/build/${presetName}",
             "cacheVariables": {
-                "CMAKE_CXX_COMPILER": "g++.exe",
+                "CMAKE_CXX_COMPILER": "g++",
                 "CMAKE_BUILD_TYPE": "Debug"
             }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "Debug",
+            "displayName": "Build Debug",
+            "configurePreset": "Debug"
         }
     ]
 }

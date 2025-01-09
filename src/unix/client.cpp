@@ -1,14 +1,23 @@
 #include "client.hpp"
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
+#include <errno.h>
+#include <netdb.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
 namespace CNET
 {
     static inline intptr_t id = 0;
 
+    Client::Client() {
+    
+    }
+
     Client::Client(internal::SocketHandle socket) {
-        internal::GlobalState::Initialize();
         m_socket = socket;
     }
 
@@ -18,10 +27,8 @@ namespace CNET
     }
 
     Client::~Client() {
-        if (m_socket != INVALID_SOCKET)
+        if (m_socket != internal::EMPTY_SOCKET_HANDLE)
             Disconnect();
-        if (!m_isInvalid)
-            internal::GlobalState::Terminate();
     }
 
     Client& Client::operator=(Client&& other) noexcept {
@@ -31,7 +38,7 @@ namespace CNET
     }
 
     bool Client::Connect(const std::string& address, const std::string& port) {
-        if (m_socket != INVALID_SOCKET) {
+        if (m_socket != internal::EMPTY_SOCKET_HANDLE) {
             Disconnect();
         }
 
@@ -46,40 +53,40 @@ namespace CNET
             return false;
         for (auto addrPtr = addrPtrList; addrPtr != nullptr; addrPtr = addrPtr->ai_next) {
             m_socket = socket(addrPtr->ai_family, addrPtr->ai_socktype, addrPtr->ai_protocol);
-            if (m_socket == INVALID_SOCKET)
+            if (m_socket == internal::EMPTY_SOCKET_HANDLE)
                 break;
 
             result = connect(m_socket, addrPtr->ai_addr, addrPtr->ai_addrlen);
-            if (result == SOCKET_ERROR) {
-                closesocket(m_socket);
-                m_socket = INVALID_SOCKET;
+            if (result == -1) {
+                close(m_socket);
+                m_socket = internal::EMPTY_SOCKET_HANDLE;
                 continue;
             }
             break;
         }
         freeaddrinfo(addrPtrList);
-        if (m_socket == INVALID_SOCKET)
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE)
             return false;
 
-        unsigned long mode = 1;
-        if (ioctlsocket(m_socket, FIONBIO, &mode) != NO_ERROR) {
-            closesocket(m_socket);
-            m_socket = INVALID_SOCKET;
+        int flags = fcntl(m_socket, F_GETFL, 0);
+        if (fcntl(m_socket, F_SETFL, flags | O_NONBLOCK) == -1) {
+            close(m_socket);
+            m_socket = internal::EMPTY_SOCKET_HANDLE;
             return false;
         }
         return true;
     }
 
     void Client::Disconnect() {
-        if (m_socket == INVALID_SOCKET)
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE)
             return;
-        shutdown(m_socket, SD_BOTH);
-        closesocket(m_socket);
-        m_socket = INVALID_SOCKET;
+        shutdown(m_socket, SHUT_RDWR);
+        close(m_socket);
+        m_socket = internal::EMPTY_SOCKET_HANDLE;
     }
 
     bool Client::IsConnected() {
-        if (m_socket == INVALID_SOCKET) {
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE) {
             return false;
         }
 
@@ -94,10 +101,9 @@ namespace CNET
             isConnected = false;
         } else if (result < 0) {
             // Error
-            auto lastError = WSAGetLastError();
-            if (lastError == WSAENOTCONN || lastError == WSAENOTSOCK) {
+            if (errno == ENOTCONN || errno == ENOTSOCK) {
                 isConnected = false;
-            } else if (lastError == WSAEWOULDBLOCK) {
+            } else if (errno == EWOULDBLOCK) {
                 isConnected = true;
             } else {
                 // Error not handled
@@ -107,35 +113,29 @@ namespace CNET
     }
 
     std::string Client::GetIP() {
-        if (m_socket == INVALID_SOCKET) {
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE) {
             return "Disconnected";
         }
 
         sockaddr_in addr;
-        int addrLen = sizeof(addr);
+        socklen_t addrLen = sizeof(addr);
         int result = getpeername(m_socket, reinterpret_cast<sockaddr*>(&addr), &addrLen);
         if (result == 0) {
             char ip[INET_ADDRSTRLEN];
             inet_ntop(AF_INET, &addr.sin_addr, ip, sizeof(ip));
             return ip;
         } else {
-            auto lastError = WSAGetLastError();
         }
         return "Unknown";
     }
 
     int Client::GetReceiveSize() {
-        if (m_socket == INVALID_SOCKET)
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE)
             return -1;
 
-        unsigned long bytesPending;
-        int result = ioctlsocket(m_socket, FIONREAD, &bytesPending);
-
-        if (result != 0) {
-            auto lastError = WSAGetLastError();
+        int bytesPending;
+        if (ioctl(m_socket, FIONREAD, &bytesPending) < 0)
             return -1;
-        }
-        
         return bytesPending;
     }
 
@@ -145,27 +145,27 @@ namespace CNET
     }
 
     bool Client::Send(const void* data, size_t size) {
-        if (m_socket == INVALID_SOCKET)
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE)
             return false;
 
         int result = send(m_socket, reinterpret_cast<const char*>(data), size, 0);
-        if (result == SOCKET_ERROR) 
+        if (result == -1) 
             return false;
         return true;
     }
 
     bool Client::Receive(void* data, size_t maxSize) {
-        if (m_socket == INVALID_SOCKET)
+        if (m_socket == internal::EMPTY_SOCKET_HANDLE)
             return false;
         
         int result = recv(m_socket, reinterpret_cast<char*>(data), maxSize, 0);
-        if (result == SOCKET_ERROR)
+        if (result == -1)
             return false;
         return true;
     }
 
     void Client::Invalidate() {
-        m_socket = INVALID_SOCKET;
+        m_socket = internal::EMPTY_SOCKET_HANDLE;
         m_isInvalid = true;
     }
 }
